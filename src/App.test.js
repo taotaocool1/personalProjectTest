@@ -1,6 +1,24 @@
-import { render, screen, fireEvent, cleanup, waitFor } from '@testing-library/react';
+import { render, fireEvent, cleanup, waitFor } from '@testing-library/react';
+
+// 这个 react-hooks 需要node版本12以上，我主机才10.14.0拉取不到，参考地址：https://blog.csdn.net/huan1043269994/article/details/108526072
+import { renderHook } from '@testing-library/react-hooks';
 import App from './App';
-import { Button } from 'antd';
+import { createStore } from './store/reducer';
+import TestRedux from './component/CountButton';
+import "@testing-library/jest-dom/extend-expect";
+// import { createStore as createReduxStore } from 'redux';
+import { Provider } from 'react-redux';
+
+const renderWithRedux = (
+  component,
+  { store = createStore() } = {} 
+) => {
+  return {
+    ...render(<Provider store={store}>{component}</Provider>),
+    store
+  }
+}
+// cleanup 作为一个参数传递给 afterEach ，以便在每次测试后清理所有东西，以避免内存泄漏。
 afterEach(cleanup)
 describe('App', () => {
   test('renders learn react link', async() => {
@@ -28,3 +46,25 @@ describe('App', () => {
 
   });
 });
+
+it('checks initial state is equal to 0', () => {
+  const dashbord = renderWithRedux(<TestRedux />);
+  const { getByTestId } = renderHook(() => {
+    useSaveAuthenticationDataToStorages(useDispatch());
+  }, { dashbord });
+
+  expect(getByTestId('counter')).toHaveTextContent('0')
+})
+
+it('increments the counter through redux', () => {
+  const { getByTestId } = renderWithRedux(<TestRedux />)
+  fireEvent.click(getByTestId('button-up'))
+  expect(getByTestId('counter')).toHaveTextContent('1')
+})
+
+it('decrements the counter through redux', () => {
+  const { getByTestId } = renderWithRedux(<TestRedux />)
+  fireEvent.click(getByTestId('button-down'))
+  expect(getByTestId('counter')).toHaveTextContent('-1')
+})
+
