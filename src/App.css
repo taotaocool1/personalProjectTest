@@ -1,7 +1,12 @@
+@import '~antd/dist/antd.css';
 .App {
   text-align: center;
 }
-
+colgroup { min-width : auto !important ;}
+col { min-width : auto !important ; }
+/* colgroup {
+  display: table-column;
+} */
 .App-logo {
   height: 40vmin;
   pointer-events: none;
