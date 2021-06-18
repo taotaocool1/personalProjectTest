@@ -1,17 +1,23 @@
 import { render, fireEvent, cleanup, waitFor } from '@testing-library/react';
 
-// 这个 react-hooks 需要node版本12以上，我主机才10.14.0拉取不到，参考地址：https://blog.csdn.net/huan1043269994/article/details/108526072
-import { renderHook } from '@testing-library/react-hooks';
+// 该项目唯一一个标红报错，这个 react-hooks 需要node版本12以上，我主机才10.14.0拉取不到，参考地址：https://blog.csdn.net/huan1043269994/article/details/108526072
+// import { renderHook } from '@testing-library/react-hooks';
 import App from './App';
-import { createStore } from './store/reducer';
+import { reducers, theCount } from './store/reducer';
+import { createStore } from 'redux';
 import TestRedux from './component/CountButton';
+import TestRouter from './component/TestRouter';
+import { Router } from 'react-router-dom';
 import "@testing-library/jest-dom/extend-expect";
+import { createMemoryHistory } from 'history'
 // import { createStore as createReduxStore } from 'redux';
 import { Provider } from 'react-redux';
-
+import axiosMock from 'axios';
+import TestAxios from './component/TestAxios';
+// import './api/index.js';
 const renderWithRedux = (
   component,
-  { store = createStore() } = {} 
+  { theCount, store = createStore(reducers, theCount) } = {} 
 ) => {
   return {
     ...render(<Provider store={store}>{component}</Provider>),
@@ -47,15 +53,16 @@ describe('App', () => {
   });
 });
 
-it('checks initial state is equal to 0', () => {
-  const dashbord = renderWithRedux(<TestRedux />);
-  const { getByTestId } = renderHook(() => {
-    useSaveAuthenticationDataToStorages(useDispatch());
-  }, { dashbord });
+// it('checks initial state is equal to 0', () => {
+//   const dashbord = renderWithRedux(<TestRedux />);
+//   const { getByTestId } = renderHook(() => {
+//     useSaveAuthenticationDataToStorages(useDispatch());
+//   }, { dashbord });
 
-  expect(getByTestId('counter')).toHaveTextContent('0')
-})
+//   expect(getByTestId('counter')).toHaveTextContent('0')
+// })
 
+// 测试 redux
 it('increments the counter through redux', () => {
   const { getByTestId } = renderWithRedux(<TestRedux />)
   fireEvent.click(getByTestId('button-up'))
@@ -63,8 +70,66 @@ it('increments the counter through redux', () => {
 })
 
 it('decrements the counter through redux', () => {
-  const { getByTestId } = renderWithRedux(<TestRedux />)
+  const { getByTestId } = renderWithRedux(<TestRedux /> )
   fireEvent.click(getByTestId('button-down'))
   expect(getByTestId('counter')).toHaveTextContent('-1')
 })
+
+
+// 测试 路由跳转
+const renderWithRouter = (component) => {
+      const history = createMemoryHistory()
+      return { 
+      ...render (
+      <Router history={history}>
+          {component}
+      </Router>
+    )
+  }
+}
+it('should render the home page', () => {
+
+  const { container, getByTestId } = renderWithRouter(<TestRouter />) 
+  const navbar = getByTestId('navbar')
+  const link = getByTestId('home-link')
+
+  expect(container.innerHTML).toMatch('Home page')
+  expect(navbar).toContainElement(link)
+})
+
+it('should navigate to the about page', ()=> {
+    const { container, getByTestId } = renderWithRouter(<TestRouter />) 
+
+    fireEvent.click(getByTestId('about-link'))
+
+    expect(container.innerHTML).toMatch('About page')
+})
+
+// 测试 axios
+jest.mock('axios'); // 这个axios 不要写错或者漏写，不然mockResolvedValueOnce就执行不到，还可用简单方式实现，就是上面注释掉的./api/index.js引进来使用
+it('should display a loading text', () => {
+
+  const { getByTestId } = render(<TestAxios />)
+ 
+   expect(getByTestId('loading')).toHaveTextContent('Loading...')
+ })
+
+ it('should load and display the data', async () => {
+  const url = '/greeting'
+  const { getByTestId } = render(<TestAxios url={url} />)
+
+  axiosMock.get.mockResolvedValueOnce({
+    data: { greeting: 'hello there' },
+  })
+
+  fireEvent.click(getByTestId('fetch-data'))
+
+  const greetingData = await waitFor(() => getByTestId('show-data'))
+// 简单参考：https://www.cnblogs.com/lihuijuan/p/12957896.html
+  expect(axiosMock.get).toHaveBeenCalledTimes(1) // 用来判断mock函数是否被掉用过；
+  expect(axiosMock.get).toHaveBeenCalledWith(url) // 用来判断是否使用了特定参数调mock函数
+  expect(greetingData).toHaveTextContent('hello there')
+})
+
+
 

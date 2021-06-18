@@ -1,9 +1,7 @@
 import { combineReducers, createStore as createReduxStore } from 'redux';
-// const initialState = {
-//     count: 0
-// }
+export const theCount = 0;
 
-const count = (state = 0, action) => {
+export const count = (state = theCount, action) => {
     console.log(action);
     switch (action.type) {
     case 'INCREMENT':
@@ -15,7 +13,7 @@ const count = (state = 0, action) => {
     }
 }
 // 将 initialState的count 绑定到reducer，看仔细！！
-const reducers = combineReducers({
+export const reducers = combineReducers({
     count
   });
 // reducers = { count: 0 };因为count的（state = 0）

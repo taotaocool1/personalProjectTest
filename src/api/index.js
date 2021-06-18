@@ -5,3 +5,6 @@ Mock.mock('/data',{
         'number|1-100': 100
     }]
 });
+Mock.mock('/greeting',{
+    greeting: 'hello there' 
+});
