@@ -17,7 +17,7 @@ import TestAxios from './component/TestAxios';
 // import './api/index.js';
 const renderWithRedux = (
   component,
-  { theCount, store = createStore(reducers, theCount) } = {} 
+  { theCounts = theCount, store = createStore(reducers, theCounts) } = {} 
 ) => {
   return {
     ...render(<Provider store={store}>{component}</Provider>),
@@ -70,7 +70,7 @@ it('increments the counter through redux', () => {
 })
 
 it('decrements the counter through redux', () => {
-  const { getByTestId } = renderWithRedux(<TestRedux /> )
+  const { getByTestId } = renderWithRedux(<TestRedux />)
   fireEvent.click(getByTestId('button-down'))
   expect(getByTestId('counter')).toHaveTextContent('-1')
 })
